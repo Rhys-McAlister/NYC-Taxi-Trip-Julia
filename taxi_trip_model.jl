@@ -20,6 +20,14 @@ function impute_median(df::DataFrame)
     end
 end
 
+# function impute_median(df::DataFrame)
+#     median_cols = [:passenger_count, :airport_fee, :congestion_surcharge, :RatecodeID]
+#     median_passenger_count = median(skipmissing(df[!, :passenger_count]))
+#     for col in median_cols
+#         df[!, col] = replace.(df[!, col], missing => ] )
+#     end
+# end
+
 impute_median(yellow_2022_01)
 
 
@@ -51,12 +59,34 @@ describe(yellow_2022_01)
 
 
 # TODO: one-hot encode vendorid and store_and_fwd_flag
+function preprocess(df::DataFrame, predicitors::Vector)
+    processed_df = df[:, predicitors]
+    processed_df = coerce!(processed_df, Union{Missing, Continuous}=>Continuous, tight=true)
+    return processed_df
+end
+
+function train_test_split(df::DataFrame)
+    
+
+    y, X = MLJ.unpack(processed_df, ==(Symbol("trip_distance")), colname -> true)
+    train, test = partition(eachindex(y), 0.7)
+    return y, X, train, test
+end
 
 
 
+function linear_regression_model()
+    OLS = @load LinearRegressor pkg=GLM
+    ols = OLS()
+    mach =  machine(ols, X, y) |> fit!
+    fitted_param = fitted_params(mach)
+    reports = report(mach)
+    return fitted_param, reports
+end
 
-LinearRegressor = @load LinearRegressor pkg=MLJLinearModels
 
-schema(yellow_2022_01)
+processed_df = preprocess(yellow_2022_01, [:trip_distance, :total_amount, :passenger_count])
 
-coerce!(yellow_2022_01, yellow_2022_01 => Continuous)
+y, X, train,test = train_test_split(processed_df)
+
+fitted_param, reports = linear_regression_model()
