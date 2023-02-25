@@ -4,6 +4,7 @@ using Parquet2
 using Statistics
 using Dates
 using MLJ
+using Flux
 
 function import_data(file::String)
     data = Parquet2.Dataset(file)
@@ -11,7 +12,19 @@ function import_data(file::String)
     return df
 end
 
-yellow_2022_01 = import_data("yellow_tripdata_2022-01.parquet")
+
+
+
+function fetch_data_from_url(year::String, month::String)
+    url = "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_$(year)-$(month).parquet"
+    file = download(url)
+    data = Parquet2.Dataset(file)
+    df = DataFrame(data; copycols=false)
+    return df
+end
+
+yellow_2021_01 = test("2020","01")
+
 
 function impute_median(df::DataFrame)
     median_cols = [:passenger_count, :airport_fee, :congestion_surcharge, :RatecodeID]
